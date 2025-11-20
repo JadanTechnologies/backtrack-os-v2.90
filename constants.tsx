@@ -75,7 +75,7 @@ export const FAKE_RESULT: AnalysisResult = {
     ],
     victimInfo: {
         name: 'Yusuf Sulaiman Gora',
-        imageUrl: 'https://i.imgur.com/O1n3f0z.png',
+        imageUrl: 'https://i.ibb.co/Qn5mSg2/user-profile.jpg',
         device: 'iPhone 13',
         carrier: 'MTN Nigeria / Airtel Nigeria',
         location: { name: 'Sokoto Central City, Sokoto, NG', lat: 13.0623, lon: 5.2339 },

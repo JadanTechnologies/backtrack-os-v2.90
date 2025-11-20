@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location } from './types';
 import { ANALYSIS_STEPS, FAKE_RESULT } from './constants';
@@ -22,7 +23,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPho
         >
           {isAnalyzing ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -173,12 +174,12 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
-  const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
   const MAP_BOUNDS = {
-    topLeft: { lat: 13.10, lon: 5.18 },
-    bottomRight: { lat: 13.00, lon: 5.28 }
+    topLeft: { lat: 13.08, lon: 5.18 },
+    bottomRight: { lat: 13.02, lon: 5.26 }
   };
   const MAP_WIDTH = 800;
   const MAP_HEIGHT = 800;
@@ -253,6 +254,12 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
   const resetTransform = () => {
     setTransform({ x: 0, y: 0, scale: 1 });
   };
+  
+  const handleMarkerClick = (location: Location, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedLocation(prev => (prev?.name === location.name ? null : location));
+  };
+
 
   return (
     <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
@@ -276,7 +283,14 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
             onWheel={handleWheel}
         >
             <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-                <image href="https://i.imgur.com/vHqXFSO.jpeg" x="0" y="0" width={MAP_WIDTH} height={MAP_HEIGHT} />
+                <image 
+                  href="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Sokoto_Nigeria_Landsat_7.png/800px-Sokoto_Nigeria_Landsat_7.png" 
+                  x="0" 
+                  y="0" 
+                  width={MAP_WIDTH} 
+                  height={MAP_HEIGHT} 
+                  onClick={() => setSelectedLocation(null)}
+                />
                 
                 <line 
                     x1={VICTIM_POS.x} y1={VICTIM_POS.y} 
@@ -290,28 +304,40 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
 
                 <g 
                     transform={`translate(${VICTIM_POS.x}, ${VICTIM_POS.y})`}
-                    onMouseEnter={() => setHoveredLocation(victimLocation.name)}
-                    onMouseLeave={() => setHoveredLocation(null)}
-                    className="transition-transform duration-200 hover:scale-125"
+                    onClick={(e) => handleMarkerClick(victimLocation, e)}
+                    className="cursor-pointer transition-transform duration-200 hover:scale-125"
                 >
                     <circle r={5 / transform.scale} fill="#22c55e" stroke="#fff" strokeWidth={1 / transform.scale}/>
-                    {hoveredLocation === victimLocation.name && (
-                        <text x="0" y={-10 / transform.scale} textAnchor="middle" fill="#fff" fontSize={10 / transform.scale} className="font-sans drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                            {victimLocation.name}
-                        </text>
+                    {selectedLocation?.name === victimLocation.name && (
+                         <foreignObject x={-75 / transform.scale} y={10 / transform.scale} width={150 / transform.scale} height={100 / transform.scale}>
+{/* FIX: Removed invalid xmlns attribute from div element. */}
+                             <div
+                                className="bg-slate-900/80 text-white p-2 rounded-md shadow-lg border border-slate-600 text-center" 
+                                style={{ fontSize: `${10 / transform.scale}px`, lineHeight: 1.2 }}>
+                                <p className="font-bold" style={{ fontSize: `${11 / transform.scale}px` }}>{victimLocation.name}</p>
+                                <p className="opacity-80">Lat: {victimLocation.lat.toFixed(4)}</p>
+                                <p className="opacity-80">Lon: {victimLocation.lon.toFixed(4)}</p>
+                            </div>
+                        </foreignObject>
                     )}
                 </g>
                 <g 
                     transform={`translate(${ATTACKER_POS.x}, ${ATTACKER_POS.y})`}
-                    onMouseEnter={() => setHoveredLocation(attackerLocation.name)}
-                    onMouseLeave={() => setHoveredLocation(null)}
-                     className="transition-transform duration-200 hover:scale-125"
+                    onClick={(e) => handleMarkerClick(attackerLocation, e)}
+                    className="cursor-pointer transition-transform duration-200 hover:scale-125"
                 >
                     <circle r={5 / transform.scale} fill="#ef4444" stroke="#fff" strokeWidth={1 / transform.scale}/>
-                     {hoveredLocation === attackerLocation.name && (
-                        <text x="0" y={16 / transform.scale} textAnchor="middle" fill="#fff" fontSize={10 / transform.scale} className="font-sans drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                            {attackerLocation.name}
-                        </text>
+                     {selectedLocation?.name === attackerLocation.name && (
+                         <foreignObject x={-75 / transform.scale} y={10 / transform.scale} width={150 / transform.scale} height={100 / transform.scale}>
+{/* FIX: Removed invalid xmlns attribute from div element. */}
+                              <div
+                                className="bg-slate-900/80 text-white p-2 rounded-md shadow-lg border border-slate-600 text-center" 
+                                style={{ fontSize: `${10 / transform.scale}px`, lineHeight: 1.2 }}>
+                                <p className="font-bold" style={{ fontSize: `${11 / transform.scale}px` }}>{attackerLocation.name}</p>
+                                <p className="opacity-80">Lat: {attackerLocation.lat.toFixed(4)}</p>
+                                <p className="opacity-80">Lon: {attackerLocation.lon.toFixed(4)}</p>
+                            </div>
+                        </foreignObject>
                     )}
                 </g>
             </g>
