@@ -9,19 +9,19 @@ declare const L: any;
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPhoneNumber, onAnalyze, isAnalyzing, error }) => {
   return (
     <div className="w-full max-w-lg mx-auto">
-      <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-lg border border-slate-700 focus-within:ring-2 focus-within:ring-cyan-500 transition-all duration-300">
+      <div className="flex items-center gap-2 bg-black/50 p-2 border border-lime-500/30 focus-within:ring-2 focus-within:ring-lime-500 transition-all duration-300">
         <input
           type="tel"
           value={phoneNumber}
           onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="+1 (555) 123-4567"
+          placeholder="> enter target number..."
           disabled={isAnalyzing}
-          className="flex-grow bg-transparent p-2 text-lg text-slate-100 placeholder-slate-500 focus:outline-none"
+          className="flex-grow bg-transparent p-2 text-lg text-lime-300 placeholder-lime-900 focus:outline-none"
         />
         <button
           onClick={onAnalyze}
           disabled={isAnalyzing}
-          className="flex items-center justify-center gap-2 bg-cyan-600 text-white font-bold py-2 px-6 rounded-md hover:bg-cyan-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-300 group"
+          className="flex items-center justify-center gap-2 bg-lime-900/50 text-lime-400 font-bold py-2 px-6 border border-lime-500 hover:bg-lime-800/50 disabled:bg-gray-800 disabled:border-gray-600 disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-300 group"
         >
           {isAnalyzing ? (
             <>
@@ -29,7 +29,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPho
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
-              Analyzing...
+              Executing...
             </>
           ) : (
             <>
@@ -54,17 +54,17 @@ const AnalysisLog: React.FC<AnalysisLogProps> = ({ logs }) => {
   }, [logs]);
 
   const statusColorMap = {
-    running: 'text-cyan-400',
-    success: 'text-green-400',
+    running: 'text-blue-400',
+    success: 'text-lime-400',
     failure: 'text-yellow-400'
   };
 
   return (
-    <div ref={logContainerRef} className="w-full max-w-2xl mx-auto h-72 bg-black/50 p-4 rounded-lg border border-slate-700 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
+    <div ref={logContainerRef} className="w-full max-w-2xl mx-auto h-72 bg-black/50 p-4 border border-lime-500/30 overflow-y-auto scrollbar-thin scrollbar-thumb-lime-700 scrollbar-track-black">
       <div className="space-y-2">
         {logs.map(log => (
           <div key={log.id} className="flex items-center gap-3 animate-fadeIn">
-            <div className={`flex-shrink-0 ${statusColorMap[log.status] || 'text-slate-400'}`}>
+            <div className={`flex-shrink-0 ${statusColorMap[log.status] || 'text-lime-600'}`}>
               {log.icon}
             </div>
             <p className="flex-grow text-sm">{log.message}</p>
@@ -79,33 +79,33 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onShowLogs }) =
   if (!result) return null;
 
   const threatColor = {
-    'High': 'border-red-500 bg-red-900/30 text-red-300',
-    'Medium': 'border-yellow-500 bg-yellow-900/30 text-yellow-300',
-    'Low': 'border-green-500 bg-green-900/30 text-green-300',
-    'None': 'border-blue-500 bg-blue-900/30 text-blue-300',
+    'High': 'border-red-500/50 bg-red-900/30 text-red-400',
+    'Medium': 'border-yellow-500/50 bg-yellow-900/30 text-yellow-400',
+    'Low': 'border-lime-500/50 bg-green-900/30 text-lime-400',
+    'None': 'border-blue-500/50 bg-blue-900/30 text-blue-400',
   };
 
   return (
-    <div className={`w-full h-full p-6 rounded-lg border ${threatColor[result.threatLevel]} animate-fadeIn`}>
+    <div className={`w-full h-full p-6 border ${threatColor[result.threatLevel]} animate-fadeIn`}>
       <div className="flex items-center gap-4 mb-4">
         <AlertTriangleIcon className="w-10 h-10 text-red-400" />
         <div>
-          <h2 className="text-2xl font-bold text-white">{result.summary}</h2>
+          <h2 className="text-2xl font-bold text-lime-200">{result.summary}</h2>
           <p className="text-lg">Threat Level: <span className="font-bold">{result.threatLevel}</span></p>
         </div>
       </div>
       <div className="space-y-3 mt-6">
         {result.details.map((detail, index) => (
           <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm">
-            <p className="font-bold text-slate-400 md:col-span-1">{detail.key}:</p>
-            <p className="text-white md:col-span-2">{detail.value}</p>
+            <p className="font-bold text-lime-600 md:col-span-1">{detail.key}:</p>
+            <p className="text-lime-200 md:col-span-2">{detail.value}</p>
           </div>
         ))}
       </div>
-      <div className="mt-8 pt-4 border-t border-slate-700/50 flex justify-center">
+      <div className="mt-8 pt-4 border-t border-lime-500/20 flex justify-center">
         <button
           onClick={onShowLogs}
-          className="flex items-center justify-center gap-2 bg-slate-700 text-slate-300 font-bold py-2 px-6 rounded-md hover:bg-slate-600 transition-all duration-300 group"
+          className="flex items-center justify-center gap-2 bg-lime-900/50 text-lime-400 font-bold py-2 px-6 border border-lime-500 hover:bg-lime-800/50 transition-all duration-300 group"
         >
           <FileTextIcon className="w-5 h-5" />
           View Detailed Logs
@@ -117,26 +117,26 @@ const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ result, onShowLogs }) =
 
 const VictimInfoDisplay: React.FC<VictimInfoDisplayProps> = ({ victimInfo, phoneNumber }) => {
   return (
-    <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
-      <h2 className="text-xl font-bold text-cyan-400 mb-4">Subject Information</h2>
+    <div className="w-full h-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn">
+      <h2 className="text-xl font-bold text-lime-400 mb-4">Subject Information</h2>
       <div className="flex flex-col sm:flex-row gap-4">
         <img 
             src={victimInfo.imageUrl} 
             alt="Subject Avatar" 
-            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-slate-600 object-cover mx-auto sm:mx-0 flex-shrink-0"
+            className="w-24 h-24 sm:w-32 sm:h-32 border-2 border-lime-500/50 object-cover mx-auto sm:mx-0 flex-shrink-0"
             loading="lazy"
             decoding="async"
         />
         <div className="text-sm space-y-2 flex-grow text-center sm:text-left">
-            <h3 className="text-2xl font-bold text-white">{victimInfo.name}</h3>
-            <p className="text-slate-400">{phoneNumber}</p>
+            <h3 className="text-2xl font-bold text-lime-200">{victimInfo.name}</h3>
+            <p className="text-lime-600">{phoneNumber}</p>
             <div className="pt-2">
-              <p><span className="font-bold text-slate-400">Device: </span>{victimInfo.device}</p>
-              <p><span className="font-bold text-slate-400">Carrier: </span>{victimInfo.carrier}</p>
-              <p><span className="font-bold text-slate-400">Location: </span>{victimInfo.location.name}</p>
-              <p><span className="font-bold text-slate-400">DOB: </span>{victimInfo.dob}</p>
-              <p><span className="font-bold text-slate-400">Address: </span>{victimInfo.address}</p>
-              <p><span className="font-bold text-slate-400">Origin: </span>{victimInfo.stateOfOrigin}</p>
+              <p><span className="font-bold text-lime-600">Device: </span>{victimInfo.device}</p>
+              <p><span className="font-bold text-lime-600">Carrier: </span>{victimInfo.carrier}</p>
+              <p><span className="font-bold text-lime-600">Location: </span>{victimInfo.location.name}</p>
+              <p><span className="font-bold text-lime-600">DOB: </span>{victimInfo.dob}</p>
+              <p><span className="font-bold text-lime-600">Address: </span>{victimInfo.address}</p>
+              <p><span className="font-bold text-lime-600">Origin: </span>{victimInfo.stateOfOrigin}</p>
             </div>
         </div>
       </div>
@@ -146,31 +146,31 @@ const VictimInfoDisplay: React.FC<VictimInfoDisplayProps> = ({ victimInfo, phone
 
 const DeviceInfoDisplay: React.FC<{ victimInfo: VictimInfo }> = ({ victimInfo }) => {
   return (
-    <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
-      <h2 className="text-xl font-bold text-cyan-400 mb-4">Device Information</h2>
+    <div className="w-full h-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn">
+      <h2 className="text-xl font-bold text-lime-400 mb-4">Device Information</h2>
       <div className="text-sm space-y-4">
         <div>
-            <h3 className="text-slate-400 font-bold mb-2 border-b border-slate-700 pb-1">Primary</h3>
+            <h3 className="text-lime-600 font-bold mb-2 border-b border-lime-500/30 pb-1">Primary</h3>
             <div className="grid grid-cols-3 gap-x-4 gap-y-1">
-                <span className="text-slate-500">Network</span><span className="col-span-2 text-white">{victimInfo.network1}</span>
-                <span className="text-slate-500">Carrier</span><span className="col-span-2 text-white">{victimInfo.carrier.split('/')[0]?.trim()}</span>
-                <span className="text-slate-500">IMEI</span><span className="col-span-2 text-white">{victimInfo.imei}</span>
-                <span className="text-slate-500">ICCID</span><span className="col-span-2 text-white">{victimInfo.iccid}</span>
-                <span className="text-slate-500">MEID</span><span className="col-span-2 text-white">{victimInfo.meid}</span>
+                <span className="text-lime-700">Network</span><span className="col-span-2 text-lime-200">{victimInfo.network1}</span>
+                <span className="text-lime-700">Carrier</span><span className="col-span-2 text-lime-200">{victimInfo.carrier.split('/')[0]?.trim()}</span>
+                <span className="text-lime-700">IMEI</span><span className="col-span-2 text-lime-200">{victimInfo.imei}</span>
+                <span className="text-lime-700">ICCID</span><span className="col-span-2 text-lime-200">{victimInfo.iccid}</span>
+                <span className="text-lime-700">MEID</span><span className="col-span-2 text-lime-200">{victimInfo.meid}</span>
             </div>
         </div>
          <div>
-            <h3 className="text-slate-400 font-bold mb-2 border-b border-slate-700 pb-1">Secondary</h3>
+            <h3 className="text-lime-600 font-bold mb-2 border-b border-lime-500/30 pb-1">Secondary</h3>
              <div className="grid grid-cols-3 gap-x-4 gap-y-1">
-                <span className="text-slate-500">Network</span><span className="col-span-2 text-white">{victimInfo.network2}</span>
-                <span className="text-slate-500">Carrier</span><span className="col-span-2 text-white">{victimInfo.carrier.split('/')[1]?.trim()}</span>
-                <span className="text-slate-500">IMEI2</span><span className="col-span-2 text-white">{victimInfo.imei2}</span>
+                <span className="text-lime-700">Network</span><span className="col-span-2 text-lime-200">{victimInfo.network2}</span>
+                <span className="text-lime-700">Carrier</span><span className="col-span-2 text-lime-200">{victimInfo.carrier.split('/')[1]?.trim()}</span>
+                <span className="text-lime-700">IMEI2</span><span className="col-span-2 text-lime-200">{victimInfo.imei2}</span>
             </div>
         </div>
         <div>
-            <h3 className="text-slate-400 font-bold mb-2 border-b border-slate-700 pb-1">Identifiers</h3>
+            <h3 className="text-lime-600 font-bold mb-2 border-b border-lime-500/30 pb-1">Identifiers</h3>
             <div className="grid grid-cols-3 gap-x-4 gap-y-1">
-                 <span className="text-slate-500">EID</span><span className="col-span-2 text-white break-all">{victimInfo.eid}</span>
+                 <span className="text-lime-700">EID</span><span className="col-span-2 text-lime-200 break-all">{victimInfo.eid}</span>
             </div>
         </div>
       </div>
@@ -189,9 +189,13 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
       attributionControl: false,
     });
 
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    const tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
       maxZoom: 18,
     }).addTo(map);
+    
+    if (tileLayer.getContainer()) {
+      (tileLayer.getContainer() as HTMLElement).style.filter = 'grayscale(1) brightness(0.6) invert(1)';
+    }
 
     const createPulseIcon = (color: string) => L.divIcon({
         className: 'custom-pulse-icon',
@@ -201,7 +205,7 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
         popupAnchor: [0, -12]
     });
 
-    const victimIcon = createPulseIcon('#22c55e');
+    const victimIcon = createPulseIcon('#39ff14');
     const attackerIcon = createPulseIcon('#ef4444');
 
     L.marker([victimLocation.lat, victimLocation.lon], { icon: victimIcon })
@@ -226,9 +230,9 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
   }, [victimLocation, attackerLocation]);
 
   return (
-    <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
-      <h2 className="text-xl font-bold text-cyan-400 mb-4">Threat Vector Map</h2>
-      <div className="relative aspect-square bg-black/30 rounded-md overflow-hidden border border-slate-700">
+    <div className="w-full h-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn">
+      <h2 className="text-xl font-bold text-lime-400 mb-4">Threat Vector Map</h2>
+      <div className="relative aspect-square bg-black/30 overflow-hidden border border-lime-500/30">
         <div ref={mapContainerRef} className="w-full h-full" id="map" />
       </div>
       <style>{`
@@ -237,19 +241,20 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
         }
         .leaflet-popup-pane, .leaflet-control { z-index: 2 !important; }
         .leaflet-popup-content-wrapper {
-            background: #1e293b;
-            color: #cbd5e1;
-            border: 1px solid #334155;
-            border-radius: 6px;
+            background: #050505;
+            color: #39ff14;
+            border: 1px solid #39ff14;
+            border-radius: 0;
         }
         .leaflet-popup-content { font-family: 'Share Tech Mono', monospace; }
-        .leaflet-popup-tip { background: #1e293b; }
-        .leaflet-container a.leaflet-popup-close-button { color: #cbd5e1; }
+        .leaflet-popup-tip { background: #050505; border-top-color: #39ff14; }
+        .leaflet-container a.leaflet-popup-close-button { color: #39ff14; }
         .custom-pulse-icon { position: relative; }
         .pulse-dot {
-            width: 12px; height: 12px; border-radius: 50%;
+            width: 12px; height: 12px;
             position: absolute; top: 6px; left: 6px;
-            border: 2px solid white;
+            border-radius: 50%;
+            border: 2px solid black;
         }
         .pulse-ring {
             width: 24px; height: 24px; border-radius: 50%;
@@ -280,19 +285,19 @@ const DetailedLogsModal: React.FC<{ logs: LogEntry[]; onClose: () => void }> = (
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 animate-fadeIn" onClick={onClose}>
-      <div className="w-full max-w-3xl bg-slate-900 border border-slate-700 rounded-lg shadow-xl" onClick={e => e.stopPropagation()}>
-        <div className="p-4 border-b border-slate-700 flex justify-between items-center">
-          <h2 className="text-xl font-bold text-cyan-400">Analysis Log Details</h2>
-          <button onClick={onClose} className="text-slate-400 hover:text-white">&times;</button>
+    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn" onClick={onClose}>
+      <div className="w-full max-w-3xl bg-black border border-lime-500/50 shadow-xl" onClick={e => e.stopPropagation()}>
+        <div className="p-4 border-b border-lime-500/30 flex justify-between items-center">
+          <h2 className="text-xl font-bold text-lime-400">Analysis Log Details</h2>
+          <button onClick={onClose} className="text-lime-400 hover:text-white text-2xl">&times;</button>
         </div>
-        <div className="p-4 h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800">
+        <div className="p-4 h-[60vh] overflow-y-auto scrollbar-thin scrollbar-thumb-lime-700 scrollbar-track-black">
            {logs.map(log => (
-              <div key={log.id} className="flex items-center gap-3 mb-2">
-                <div className="flex-shrink-0 text-slate-500">
+              <div key={log.id} className="flex items-start gap-3 mb-2">
+                <div className="flex-shrink-0 text-lime-700 pt-1">
                   {log.icon}
                 </div>
-                <p className="flex-grow text-sm text-slate-300">{log.message}</p>
+                <p className="flex-grow text-sm text-lime-400">{log.message}</p>
               </div>
             ))}
         </div>
@@ -344,12 +349,12 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-300 flex flex-col items-center justify-center p-4 selection:bg-cyan-300 selection:text-cyan-900">
+    <div className="min-h-screen bg-black text-lime-400 flex flex-col items-center p-4 selection:bg-lime-300 selection:text-lime-900">
       <div className="w-full text-center mb-8">
-        <h1 className="text-4xl md:text-5xl font-bold text-cyan-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)]">
+        <h1 className="text-4xl md:text-5xl font-bold text-lime-400 drop-shadow-[0_0_8px_rgba(57,255,20,0.5)]">
           Device Integrity Analyzer
         </h1>
-        <p className="text-slate-400 mt-2">BackTrack OS v22.5</p>
+        <p className="text-lime-600 mt-2">BackTrack OS v22.5<span className="blinking-cursor">_</span></p>
       </div>
 
       <div className="w-full space-y-6">
@@ -382,7 +387,7 @@ function App() {
         )}
       </div>
 
-      <footer className="mt-12 text-center text-xs text-slate-600">
+      <footer className="mt-12 text-center text-xs text-lime-800/70">
           <p>&copy; 2024 Corporate Security Division</p>
       </footer>
     </div>

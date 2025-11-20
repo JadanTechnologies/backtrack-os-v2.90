@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { LogEntry, AnalysisResult } from './types';
 
@@ -46,19 +47,19 @@ export const HomeIcon: React.FC<{className?: string}> = ({ className }) => (
 );
 
 export const ANALYSIS_STEPS: Omit<LogEntry, 'id'>[] = [
-    { message: 'Establishing secure link to telecom backbone...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-cyan-400" />, delay: 1000 },
-    { message: 'Link established. Authenticating credentials...', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-green-400" />, delay: 1200 },
-    { message: 'Querying global IMEI registration database...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-cyan-400" />, delay: 1500 },
-    { message: 'Cross-referencing hardware signature...', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-green-400" />, delay: 800 },
-    { message: 'Scanning for unauthorized IMSI catcher activity (StingRay)...', status: 'running', icon: <WifiIcon className="w-5 h-5 text-cyan-400" />, delay: 2000 },
-    { message: 'No active IMSI catchers detected in proximity.', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-green-400" />, delay: 1000 },
-    { message: 'Analyzing signal tower triangulation patterns...', status: 'running', icon: <WifiIcon className="w-5 h-5 text-cyan-400" />, delay: 1800 },
+    { message: 'Establishing secure link to telecom backbone...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-blue-400" />, delay: 1000 },
+    { message: 'Link established. Authenticating credentials...', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-lime-400" />, delay: 1200 },
+    { message: 'Querying global IMEI registration database...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-blue-400" />, delay: 1500 },
+    { message: 'Cross-referencing hardware signature...', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-lime-400" />, delay: 800 },
+    { message: 'Scanning for unauthorized IMSI catcher activity (StingRay)...', status: 'running', icon: <WifiIcon className="w-5 h-5 text-blue-400" />, delay: 2000 },
+    { message: 'No active IMSI catchers detected in proximity.', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-lime-400" />, delay: 1000 },
+    { message: 'Analyzing signal tower triangulation patterns...', status: 'running', icon: <WifiIcon className="w-5 h-5 text-blue-400" />, delay: 1800 },
     { message: 'Anomaly detected in location data. Investigating...', status: 'failure', icon: <AlertTriangleIcon className="w-5 h-5 text-yellow-400" />, delay: 2200 },
-    { message: 'Checking for recent SIM swap fraud indicators...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-cyan-400" />, delay: 1300 },
-    { message: 'No recent SIM swap activity found.', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-green-400" />, delay: 500 },
-    { message: 'Deep packet inspection for call forwarding malware...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-cyan-400" />, delay: 2500 },
+    { message: 'Checking for recent SIM swap fraud indicators...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-blue-400" />, delay: 1300 },
+    { message: 'No recent SIM swap activity found.', status: 'success', icon: <ShieldCheckIcon className="w-5 h-5 text-lime-400" />, delay: 500 },
+    { message: 'Deep packet inspection for call forwarding malware...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-blue-400" />, delay: 2500 },
     { message: 'Suspicious outbound data packet signature found!', status: 'failure', icon: <AlertTriangleIcon className="w-5 h-5 text-red-500" />, delay: 1500 },
-    { message: 'Compiling report...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-cyan-400" />, delay: 1000 },
+    { message: 'Compiling report...', status: 'running', icon: <ServerIcon className="w-5 h-5 text-blue-400" />, delay: 1000 },
 ];
 
 export const FAKE_RESULT: AnalysisResult = {
