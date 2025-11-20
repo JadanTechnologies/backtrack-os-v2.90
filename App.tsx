@@ -2,7 +2,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location } from './types';
 import { ANALYSIS_STEPS, FAKE_RESULT } from './constants';
-import { SearchIcon, AlertTriangleIcon, FileTextIcon, HomeIcon } from './constants';
+import { SearchIcon, AlertTriangleIcon, FileTextIcon } from './constants';
+
+declare const L: any;
 
 const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPhoneNumber, onAnalyze, isAnalyzing, error }) => {
   return (
@@ -118,7 +120,13 @@ const VictimInfoDisplay: React.FC<VictimInfoDisplayProps> = ({ victimInfo, phone
     <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
       <h2 className="text-xl font-bold text-cyan-400 mb-4">Subject Information</h2>
       <div className="flex flex-col sm:flex-row gap-4">
-        <img src={victimInfo.imageUrl} alt="Subject Avatar" className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-slate-600 object-cover mx-auto sm:mx-0 flex-shrink-0" />
+        <img 
+            src={victimInfo.imageUrl} 
+            alt="Subject Avatar" 
+            className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-2 border-slate-600 object-cover mx-auto sm:mx-0 flex-shrink-0"
+            loading="lazy"
+            decoding="async"
+        />
         <div className="text-sm space-y-2 flex-grow text-center sm:text-left">
             <h3 className="text-2xl font-bold text-white">{victimInfo.name}</h3>
             <p className="text-slate-400">{phoneNumber}</p>
@@ -171,178 +179,88 @@ const DeviceInfoDisplay: React.FC<{ victimInfo: VictimInfo }> = ({ victimInfo })
 };
 
 const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location }> = ({ victimLocation, attackerLocation }) => {
-  const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
-  const [isPanning, setIsPanning] = useState(false);
-  const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const svgRef = useRef<SVGSVGElement>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  const MAP_BOUNDS = {
-    topLeft: { lat: 13.08, lon: 5.18 },
-    bottomRight: { lat: 13.02, lon: 5.26 }
-  };
-  const MAP_WIDTH = 800;
-  const MAP_HEIGHT = 800;
+  useEffect(() => {
+    if (!mapContainerRef.current || typeof L === 'undefined') return;
 
-  const project = (lat: number, lon: number) => {
-      const y = ((MAP_BOUNDS.topLeft.lat - lat) / (MAP_BOUNDS.topLeft.lat - MAP_BOUNDS.bottomRight.lat)) * MAP_HEIGHT;
-      const x = ((lon - MAP_BOUNDS.topLeft.lon) / (MAP_BOUNDS.bottomRight.lon - MAP_BOUNDS.topLeft.lon)) * MAP_WIDTH;
-      return { x, y };
-  };
+    const map = L.map(mapContainerRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+    });
 
-  const VICTIM_POS = project(victimLocation.lat, victimLocation.lon);
-  const ATTACKER_POS = project(attackerLocation.lat, attackerLocation.lon);
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 18,
+    }).addTo(map);
 
-  const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
-    setIsPanning(true);
-    setStartPoint({ x: e.clientX - transform.x, y: e.clientY - transform.y });
-  };
+    const createPulseIcon = (color: string) => L.divIcon({
+        className: 'custom-pulse-icon',
+        html: `<div class="pulse-ring" style="background-color: ${color};"></div><div class="pulse-dot" style="background-color: ${color};"></div>`,
+        iconSize: [24, 24],
+        iconAnchor: [12, 12],
+        popupAnchor: [0, -12]
+    });
 
-  const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
-    if (!isPanning) return;
-    const x = e.clientX - startPoint.x;
-    const y = e.clientY - startPoint.y;
-    setTransform({ ...transform, x, y });
-  };
+    const victimIcon = createPulseIcon('#22c55e');
+    const attackerIcon = createPulseIcon('#ef4444');
 
-  const handleMouseUpOrLeave = () => {
-    setIsPanning(false);
-  };
+    L.marker([victimLocation.lat, victimLocation.lon], { icon: victimIcon })
+        .addTo(map)
+        .bindPopup(`<b>${victimLocation.name}</b><br>Lat: ${victimLocation.lat.toFixed(4)}<br>Lon: ${victimLocation.lon.toFixed(4)}`);
 
-  const handleWheel = (e: React.WheelEvent<SVGSVGElement>) => {
-      e.preventDefault();
-      if (!svgRef.current) return;
+    L.marker([attackerLocation.lat, attackerLocation.lon], { icon: attackerIcon })
+        .addTo(map)
+        .bindPopup(`<b>${attackerLocation.name}</b><br>Lat: ${attackerLocation.lat.toFixed(4)}<br>Lon: ${attackerLocation.lon.toFixed(4)}`);
 
-      const scaleFactor = 1.1;
-      const { scale } = transform;
-      const newScale = e.deltaY > 0 ? scale / scaleFactor : scale * scaleFactor;
-      
-      const clampedScale = Math.min(Math.max(0.5, newScale), 5);
+    const latlngs = [
+        [victimLocation.lat, victimLocation.lon],
+        [attackerLocation.lat, attackerLocation.lon]
+    ];
+    L.polyline(latlngs, { color: '#f43f5e', weight: 2, opacity: 0.8, dashArray: '8, 8' }).addTo(map);
 
-      const svgRect = svgRef.current.getBoundingClientRect();
-      const mouseX = e.clientX - svgRect.left;
-      const mouseY = e.clientY - svgRect.top;
+    map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
 
-      const pointX = (mouseX - transform.x) / scale;
-      const pointY = (mouseY - transform.y) / scale;
-
-      setTransform({
-          scale: clampedScale,
-          x: mouseX - pointX * clampedScale,
-          y: mouseY - pointY * clampedScale,
-      });
-  };
-
-  const zoom = (direction: 'in' | 'out') => {
-      const scaleFactor = 1.2;
-      const { scale } = transform;
-      const newScale = direction === 'in' ? scale * scaleFactor : scale / scaleFactor;
-      const clampedScale = Math.min(Math.max(0.5, newScale), 5);
-      if (!svgRef.current) return;
-      const svgRect = svgRef.current.getBoundingClientRect();
-      const centerX = svgRect.width / 2;
-      const centerY = svgRect.height / 2;
-      const pointX = (centerX - transform.x) / scale;
-      const pointY = (centerY - transform.y) / scale;
-      setTransform({
-          scale: clampedScale,
-          x: centerX - pointX * clampedScale,
-          y: centerY - pointY * clampedScale,
-      });
-  }
-
-  const resetTransform = () => {
-    setTransform({ x: 0, y: 0, scale: 1 });
-  };
-  
-  const handleMarkerClick = (location: Location, event: React.MouseEvent) => {
-    event.stopPropagation();
-    setSelectedLocation(prev => (prev?.name === location.name ? null : location));
-  };
-
+    return () => {
+      map.remove();
+    };
+  }, [victimLocation, attackerLocation]);
 
   return (
     <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
       <h2 className="text-xl font-bold text-cyan-400 mb-4">Threat Vector Map</h2>
-      <div className="relative aspect-square bg-black/30 rounded-md overflow-hidden border border-slate-700 select-none">
-        <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
-            <button onClick={() => zoom('in')} className="w-8 h-8 bg-slate-700/50 hover:bg-slate-600 rounded text-xl font-bold">+</button>
-            <button onClick={() => zoom('out')} className="w-8 h-8 bg-slate-700/50 hover:bg-slate-600 rounded text-xl font-bold">-</button>
-            <button onClick={resetTransform} className="w-8 h-8 bg-slate-700/50 hover:bg-slate-600 rounded p-1.5"><HomeIcon /></button>
-        </div>
-        
-        <svg 
-            ref={svgRef} 
-            className={`w-full h-full ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
-            preserveAspectRatio="xMidYMid slice"
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUpOrLeave}
-            onMouseLeave={handleMouseUpOrLeave}
-            onWheel={handleWheel}
-        >
-            <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-                <image 
-                  href="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Sokoto_Nigeria_Landsat_7.png/800px-Sokoto_Nigeria_Landsat_7.png" 
-                  x="0" 
-                  y="0" 
-                  width={MAP_WIDTH} 
-                  height={MAP_HEIGHT} 
-                  onClick={() => setSelectedLocation(null)}
-                />
-                
-                <line 
-                    x1={VICTIM_POS.x} y1={VICTIM_POS.y} 
-                    x2={ATTACKER_POS.x} y2={ATTACKER_POS.y}
-                    stroke="#f43f5e" 
-                    strokeWidth={1.5 / transform.scale} 
-                    strokeDasharray={`${4 / transform.scale}, ${4 / transform.scale}`}
-                >
-                    <animate attributeName="stroke-dashoffset" from="12" to="0" dur="1s" repeatCount="indefinite" />
-                </line>
-
-                <g 
-                    transform={`translate(${VICTIM_POS.x}, ${VICTIM_POS.y})`}
-                    onClick={(e) => handleMarkerClick(victimLocation, e)}
-                    className="cursor-pointer transition-transform duration-200 hover:scale-125"
-                >
-                    <circle r={5 / transform.scale} fill="#22c55e" stroke="#fff" strokeWidth={1 / transform.scale}/>
-                    {selectedLocation?.name === victimLocation.name && (
-                         <foreignObject x={-75 / transform.scale} y={10 / transform.scale} width={150 / transform.scale} height={100 / transform.scale}>
-{/* FIX: Removed invalid xmlns attribute from div element. */}
-                             <div
-                                className="bg-slate-900/80 text-white p-2 rounded-md shadow-lg border border-slate-600 text-center" 
-                                style={{ fontSize: `${10 / transform.scale}px`, lineHeight: 1.2 }}>
-                                <p className="font-bold" style={{ fontSize: `${11 / transform.scale}px` }}>{victimLocation.name}</p>
-                                <p className="opacity-80">Lat: {victimLocation.lat.toFixed(4)}</p>
-                                <p className="opacity-80">Lon: {victimLocation.lon.toFixed(4)}</p>
-                            </div>
-                        </foreignObject>
-                    )}
-                </g>
-                <g 
-                    transform={`translate(${ATTACKER_POS.x}, ${ATTACKER_POS.y})`}
-                    onClick={(e) => handleMarkerClick(attackerLocation, e)}
-                    className="cursor-pointer transition-transform duration-200 hover:scale-125"
-                >
-                    <circle r={5 / transform.scale} fill="#ef4444" stroke="#fff" strokeWidth={1 / transform.scale}/>
-                     {selectedLocation?.name === attackerLocation.name && (
-                         <foreignObject x={-75 / transform.scale} y={10 / transform.scale} width={150 / transform.scale} height={100 / transform.scale}>
-{/* FIX: Removed invalid xmlns attribute from div element. */}
-                              <div
-                                className="bg-slate-900/80 text-white p-2 rounded-md shadow-lg border border-slate-600 text-center" 
-                                style={{ fontSize: `${10 / transform.scale}px`, lineHeight: 1.2 }}>
-                                <p className="font-bold" style={{ fontSize: `${11 / transform.scale}px` }}>{attackerLocation.name}</p>
-                                <p className="opacity-80">Lat: {attackerLocation.lat.toFixed(4)}</p>
-                                <p className="opacity-80">Lon: {attackerLocation.lon.toFixed(4)}</p>
-                            </div>
-                        </foreignObject>
-                    )}
-                </g>
-            </g>
-        </svg>
+      <div className="relative aspect-square bg-black/30 rounded-md overflow-hidden border border-slate-700">
+        <div ref={mapContainerRef} className="w-full h-full" id="map" />
       </div>
+      <style>{`
+        .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas, .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer {
+            z-index: 1 !important;
+        }
+        .leaflet-popup-pane, .leaflet-control { z-index: 2 !important; }
+        .leaflet-popup-content-wrapper {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid #334155;
+            border-radius: 6px;
+        }
+        .leaflet-popup-content { font-family: 'Share Tech Mono', monospace; }
+        .leaflet-popup-tip { background: #1e293b; }
+        .leaflet-container a.leaflet-popup-close-button { color: #cbd5e1; }
+        .custom-pulse-icon { position: relative; }
+        .pulse-dot {
+            width: 12px; height: 12px; border-radius: 50%;
+            position: absolute; top: 6px; left: 6px;
+            border: 2px solid white;
+        }
+        .pulse-ring {
+            width: 24px; height: 24px; border-radius: 50%;
+            position: absolute; top: 0; left: 0;
+            animation: pulse-animation 1.5s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 };
