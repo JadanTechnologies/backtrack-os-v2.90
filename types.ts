@@ -1,11 +1,17 @@
 import type React from 'react';
 
+export interface Location {
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface VictimInfo {
   name: string;
   imageUrl: string;
   device: string;
   carrier: string;
-  location: string;
+  location: Location;
   dob: string;
   address: string;
   stateOfOrigin: string;
@@ -31,7 +37,7 @@ export interface AnalysisResult {
   summary: string;
   details: { key: string; value: string }[];
   victimInfo: VictimInfo;
-  attackerLocation: string;
+  attackerLocation: Location;
 }
 
 export interface PhoneNumberInputProps {

@@ -78,7 +78,7 @@ export const FAKE_RESULT: AnalysisResult = {
         imageUrl: 'https://i.imgur.com/O1n3f0z.png',
         device: 'iPhone 13',
         carrier: 'MTN Nigeria / Airtel Nigeria',
-        location: 'Sokoto Central City, Sokoto, NG',
+        location: { name: 'Sokoto Central City, Sokoto, NG', lat: 13.0623, lon: 5.2339 },
         dob: '15/06/1985',
         address: 'Abdullahi Fodio Road, Sokoto, Sokoto State',
         stateOfOrigin: 'Gwandu, Kebbi State',
@@ -90,5 +90,5 @@ export const FAKE_RESULT: AnalysisResult = {
         meid: '35028316920782',
         eid: '89049032007008882600094787264150',
     },
-    attackerLocation: 'Arkilla, Sokoto, NG'
+    attackerLocation: { name: 'Arkilla, Sokoto, NG', lat: 13.0451, lon: 5.2018 }
 };

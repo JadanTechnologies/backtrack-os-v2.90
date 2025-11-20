@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo } from './types';
+import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location } from './types';
 import { ANALYSIS_STEPS, FAKE_RESULT } from './constants';
 import { SearchIcon, AlertTriangleIcon, FileTextIcon, HomeIcon } from './constants';
 
@@ -22,7 +22,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPho
         >
           {isAnalyzing ? (
             <>
-              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
@@ -124,6 +124,7 @@ const VictimInfoDisplay: React.FC<VictimInfoDisplayProps> = ({ victimInfo, phone
             <div className="pt-2">
               <p><span className="font-bold text-slate-400">Device: </span>{victimInfo.device}</p>
               <p><span className="font-bold text-slate-400">Carrier: </span>{victimInfo.carrier}</p>
+              <p><span className="font-bold text-slate-400">Location: </span>{victimInfo.location.name}</p>
               <p><span className="font-bold text-slate-400">DOB: </span>{victimInfo.dob}</p>
               <p><span className="font-bold text-slate-400">Address: </span>{victimInfo.address}</p>
               <p><span className="font-bold text-slate-400">Origin: </span>{victimInfo.stateOfOrigin}</p>
@@ -168,16 +169,28 @@ const DeviceInfoDisplay: React.FC<{ victimInfo: VictimInfo }> = ({ victimInfo })
   );
 };
 
-const ThreatMap: React.FC<{ victimLocation: string; attackerLocation: string }> = ({ victimLocation, attackerLocation }) => {
+const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location }> = ({ victimLocation, attackerLocation }) => {
   const [transform, setTransform] = useState({ x: 0, y: 0, scale: 1 });
   const [isPanning, setIsPanning] = useState(false);
   const [startPoint, setStartPoint] = useState({ x: 0, y: 0 });
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const NIGERIA_SVG_PATH = "M216.5,23.1C189.8,4.6,151.7,0,151.7,0S122.6,9.1,104,23.1s-33.1,40.8-27.5,61.9c5.6,21.1,18.8,50.2,18.8,50.2l-2.8,29.3-22.3,16.7-11.2,27.9-19.5,19.5-8.4,27.9-1.4,19.5,12.6,13.9,13.9,25.1-2.8,25.1,11.2,16.7,41.8,22.3,41.8-4.2,25.1-4.2,30.7-15.3,13.9-11.2,22.3-30.7,2.8-33.5-13.9-39-13.9-22.3-25.1-16.7L241.6,78C236,56.9,232.3,34.8,216.5,23.1z";
-  const VICTIM_POS = { x: 130, y: 50 }; // Approximating Sokoto location (NW)
-  const ATTACKER_POS = { x: 145, y: 65 }; // Nearby
+  const MAP_BOUNDS = {
+    topLeft: { lat: 13.10, lon: 5.18 },
+    bottomRight: { lat: 13.00, lon: 5.28 }
+  };
+  const MAP_WIDTH = 800;
+  const MAP_HEIGHT = 800;
+
+  const project = (lat: number, lon: number) => {
+      const y = ((MAP_BOUNDS.topLeft.lat - lat) / (MAP_BOUNDS.topLeft.lat - MAP_BOUNDS.bottomRight.lat)) * MAP_HEIGHT;
+      const x = ((lon - MAP_BOUNDS.topLeft.lon) / (MAP_BOUNDS.bottomRight.lon - MAP_BOUNDS.topLeft.lon)) * MAP_WIDTH;
+      return { x, y };
+  };
+
+  const VICTIM_POS = project(victimLocation.lat, victimLocation.lon);
+  const ATTACKER_POS = project(attackerLocation.lat, attackerLocation.lon);
 
   const handleMouseDown = (e: React.MouseEvent<SVGSVGElement>) => {
     setIsPanning(true);
@@ -244,7 +257,7 @@ const ThreatMap: React.FC<{ victimLocation: string; attackerLocation: string }> 
   return (
     <div className="w-full h-full p-6 rounded-lg border border-slate-700 bg-slate-800/50 animate-fadeIn">
       <h2 className="text-xl font-bold text-cyan-400 mb-4">Threat Vector Map</h2>
-      <div className="relative aspect-video bg-black/30 rounded-md overflow-hidden border border-slate-700 select-none">
+      <div className="relative aspect-square bg-black/30 rounded-md overflow-hidden border border-slate-700 select-none">
         <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
             <button onClick={() => zoom('in')} className="w-8 h-8 bg-slate-700/50 hover:bg-slate-600 rounded text-xl font-bold">+</button>
             <button onClick={() => zoom('out')} className="w-8 h-8 bg-slate-700/50 hover:bg-slate-600 rounded text-xl font-bold">-</button>
@@ -254,7 +267,7 @@ const ThreatMap: React.FC<{ victimLocation: string; attackerLocation: string }> 
         <svg 
             ref={svgRef} 
             className={`w-full h-full ${isPanning ? 'cursor-grabbing' : 'cursor-grab'}`}
-            viewBox="0 0 300 250"
+            viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
             preserveAspectRatio="xMidYMid slice"
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
@@ -263,46 +276,41 @@ const ThreatMap: React.FC<{ victimLocation: string; attackerLocation: string }> 
             onWheel={handleWheel}
         >
             <g transform={`translate(${transform.x}, ${transform.y}) scale(${transform.scale})`}>
-                <path 
-                    d={NIGERIA_SVG_PATH}
-                    fill="rgba(56, 189, 248, 0.1)"
-                    stroke="#38bdf8"
-                    strokeWidth={0.5 / transform.scale}
-                />
+                <image href="https://i.imgur.com/vHqXFSO.jpeg" x="0" y="0" width={MAP_WIDTH} height={MAP_HEIGHT} />
                 
                 <line 
                     x1={VICTIM_POS.x} y1={VICTIM_POS.y} 
                     x2={ATTACKER_POS.x} y2={ATTACKER_POS.y}
                     stroke="#f43f5e" 
-                    strokeWidth={1 / transform.scale} 
-                    strokeDasharray={`${3 / transform.scale}, ${3 / transform.scale}`}
+                    strokeWidth={1.5 / transform.scale} 
+                    strokeDasharray={`${4 / transform.scale}, ${4 / transform.scale}`}
                 >
-                    <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" repeatCount="indefinite" />
+                    <animate attributeName="stroke-dashoffset" from="12" to="0" dur="1s" repeatCount="indefinite" />
                 </line>
 
                 <g 
                     transform={`translate(${VICTIM_POS.x}, ${VICTIM_POS.y})`}
-                    onMouseEnter={() => setHoveredLocation(victimLocation)}
+                    onMouseEnter={() => setHoveredLocation(victimLocation.name)}
                     onMouseLeave={() => setHoveredLocation(null)}
                     className="transition-transform duration-200 hover:scale-125"
                 >
-                    <circle r={4 / transform.scale} fill="#22c55e" stroke="#fff" strokeWidth={0.5 / transform.scale}/>
-                    {hoveredLocation === victimLocation && (
-                        <text x="0" y={-8 / transform.scale} textAnchor="middle" fill="#fff" fontSize={8 / transform.scale} className="font-sans">
-                            {victimLocation}
+                    <circle r={5 / transform.scale} fill="#22c55e" stroke="#fff" strokeWidth={1 / transform.scale}/>
+                    {hoveredLocation === victimLocation.name && (
+                        <text x="0" y={-10 / transform.scale} textAnchor="middle" fill="#fff" fontSize={10 / transform.scale} className="font-sans drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                            {victimLocation.name}
                         </text>
                     )}
                 </g>
                 <g 
                     transform={`translate(${ATTACKER_POS.x}, ${ATTACKER_POS.y})`}
-                    onMouseEnter={() => setHoveredLocation(attackerLocation)}
+                    onMouseEnter={() => setHoveredLocation(attackerLocation.name)}
                     onMouseLeave={() => setHoveredLocation(null)}
                      className="transition-transform duration-200 hover:scale-125"
                 >
-                    <circle r={4 / transform.scale} fill="#ef4444" stroke="#fff" strokeWidth={0.5 / transform.scale}/>
-                     {hoveredLocation === attackerLocation && (
-                        <text x="0" y={14 / transform.scale} textAnchor="middle" fill="#fff" fontSize={8 / transform.scale} className="font-sans">
-                            {attackerLocation}
+                    <circle r={5 / transform.scale} fill="#ef4444" stroke="#fff" strokeWidth={1 / transform.scale}/>
+                     {hoveredLocation === attackerLocation.name && (
+                        <text x="0" y={16 / transform.scale} textAnchor="middle" fill="#fff" fontSize={10 / transform.scale} className="font-sans drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+                            {attackerLocation.name}
                         </text>
                     )}
                 </g>
@@ -419,10 +427,10 @@ function App() {
               <div className="flex flex-col gap-6">
                 <VictimInfoDisplay victimInfo={results.victimInfo} phoneNumber={phoneNumber} />
                 <DeviceInfoDisplay victimInfo={results.victimInfo} />
-                <ThreatMap victimLocation={results.victimInfo.location} attackerLocation={results.attackerLocation} />
               </div>
-              <div>
+              <div className="flex flex-col gap-6">
                 <ResultsDisplay result={results} onShowLogs={() => setShowLogsModal(true)} />
+                <ThreatMap victimLocation={results.victimInfo.location} attackerLocation={results.attackerLocation} />
               </div>
             </div>
             {showLogsModal && <DetailedLogsModal logs={analysisLogs} onClose={() => setShowLogsModal(false)} />}
