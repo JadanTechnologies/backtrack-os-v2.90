@@ -1,0 +1,5 @@
+{
+  "name": "Phone Security Clone & Tap Analyzer",
+  "description": "An internal tool to analyze a phone number to detect potential device cloning or call interception activities.",
+  "requestFramePermissions": []
+}
