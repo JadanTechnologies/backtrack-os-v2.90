@@ -1,3 +1,4 @@
+
 import type React from 'react';
 
 export interface Location {
@@ -32,12 +33,30 @@ export interface LogEntry {
   delay?: number;
 }
 
+export interface CloningHistoryItem {
+  timestamp: string;
+  detectedImei: string;
+  status: string;
+  location: string;
+}
+
+export interface CallLogItem {
+  id: number;
+  type: 'incoming' | 'outgoing' | 'missed';
+  timestamp: string;
+  duration: string;
+  hash: string;
+  maskedNumber: string;
+}
+
 export interface AnalysisResult {
   threatLevel: 'High' | 'Medium' | 'Low' | 'None';
   summary: string;
   details: { key: string; value: string }[];
   victimInfo: VictimInfo;
   attackerLocation: Location;
+  cloningHistory: CloningHistoryItem[];
+  callLogs: CallLogItem[];
 }
 
 export interface PhoneNumberInputProps {

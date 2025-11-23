@@ -1,6 +1,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location } from './types';
+import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location, CloningHistoryItem, CallLogItem } from './types';
 import { ANALYSIS_STEPS, FAKE_RESULT } from './constants';
 import { SearchIcon, AlertTriangleIcon, FileTextIcon } from './constants';
 
@@ -176,6 +176,92 @@ const DeviceInfoDisplay: React.FC<{ victimInfo: VictimInfo }> = ({ victimInfo })
       </div>
     </div>
   );
+};
+
+const CloningHistoryDisplay: React.FC<{ history: CloningHistoryItem[] }> = ({ history }) => {
+    return (
+        <div className="w-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn mt-6">
+            <h2 className="text-xl font-bold text-lime-400 mb-4 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                Device Cloning History
+            </h2>
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left">
+                    <thead className="text-xs text-lime-600 uppercase bg-lime-900/20">
+                        <tr>
+                            <th className="px-4 py-2">Timestamp (UTC)</th>
+                            <th className="px-4 py-2">Detected IMEI Fragment</th>
+                            <th className="px-4 py-2">Location</th>
+                            <th className="px-4 py-2">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-lime-500/10">
+                        {history.map((item, index) => (
+                            <tr key={index} className="hover:bg-lime-900/10 transition-colors">
+                                <td className="px-4 py-2 text-lime-200">{item.timestamp}</td>
+                                <td className="px-4 py-2 text-lime-200 font-mono">{item.detectedImei}</td>
+                                <td className="px-4 py-2 text-lime-200">{item.location}</td>
+                                <td className="px-4 py-2">
+                                    <span className={`px-2 py-0.5 text-xs font-bold border ${item.status.includes('Active') ? 'text-red-400 border-red-400 bg-red-900/30' : 'text-lime-400 border-lime-400 bg-lime-900/30'}`}>
+                                        {item.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
+};
+
+const CallLogsDisplay: React.FC<{ logs: CallLogItem[] }> = ({ logs }) => {
+    return (
+        <div className="w-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn mt-6">
+             <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-lime-400">Intercepted Call Metadata</h2>
+                <div className="flex items-center gap-2 px-3 py-1 bg-yellow-900/30 border border-yellow-500/50 text-yellow-500 text-xs">
+                    <AlertTriangleIcon className="w-4 h-4" />
+                    <span>ENCRYPTION DETECTED</span>
+                </div>
+            </div>
+
+            <div className="bg-red-900/20 border border-red-500/30 p-3 mb-4 text-xs text-red-300 flex items-start gap-3">
+                 <div className="mt-0.5"><AlertTriangleIcon className="w-5 h-5" /></div>
+                 <div>
+                     <p className="font-bold">WARNING: RESTRICTED ACCESS</p>
+                     <p>Service provider utilizes advanced Grade-3 Encryption Tunneling (GPRS/5G-NSA). Direct unmasked call log retrieval is blocked by carrier security layers. Displaying partially recovered hashes and masked endpoints only.</p>
+                 </div>
+            </div>
+
+            <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left font-mono">
+                    <thead className="text-xs text-lime-600 uppercase bg-lime-900/20">
+                        <tr>
+                            <th className="px-4 py-2">Type</th>
+                            <th className="px-4 py-2">Time</th>
+                            <th className="px-4 py-2">Duration</th>
+                            <th className="px-4 py-2">Remote Hash</th>
+                            <th className="px-4 py-2">Masked Endpoint</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-lime-500/10">
+                        {logs.map((log) => (
+                            <tr key={log.id} className="hover:bg-lime-900/10 transition-colors">
+                                <td className={`px-4 py-2 font-bold ${log.type === 'missed' ? 'text-red-400' : log.type === 'incoming' ? 'text-blue-400' : 'text-lime-400'}`}>
+                                    {log.type.toUpperCase()}
+                                </td>
+                                <td className="px-4 py-2 text-lime-200">{log.timestamp}</td>
+                                <td className="px-4 py-2 text-lime-200">{log.duration}</td>
+                                <td className="px-4 py-2 text-gray-500">{log.hash}</td>
+                                <td className="px-4 py-2 text-lime-200">{log.maskedNumber}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    );
 };
 
 const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location }> = ({ victimLocation, attackerLocation }) => {
@@ -382,6 +468,12 @@ function App() {
                 <ThreatMap victimLocation={results.victimInfo.location} attackerLocation={results.attackerLocation} />
               </div>
             </div>
+            {/* New Row for Logs */}
+            <div className="w-full max-w-6xl mx-auto grid grid-cols-1 gap-6">
+               <CloningHistoryDisplay history={results.cloningHistory} />
+               <CallLogsDisplay logs={results.callLogs} />
+            </div>
+
             {showLogsModal && <DetailedLogsModal logs={analysisLogs} onClose={() => setShowLogsModal(false)} />}
           </>
         )}
