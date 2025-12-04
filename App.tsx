@@ -1,20 +1,20 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location, CloningHistoryItem, CallLogItem } from './types';
-import { ANALYSIS_STEPS, FAKE_RESULT } from './constants';
-import { SearchIcon, AlertTriangleIcon, FileTextIcon } from './constants';
+import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location, CloningHistoryItem, CallLogItem, NetworkPacket, ImeiTrackingResult } from './types';
+import { ANALYSIS_STEPS, FAKE_RESULT, FAKE_IMEI_RESULT } from './constants';
+import { SearchIcon, AlertTriangleIcon, FileTextIcon, ActivityIcon, ServerIcon, MapPinIcon } from './constants';
 
 declare const L: any;
 
-const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPhoneNumber, onAnalyze, isAnalyzing, error }) => {
+const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ inputValue, setInputValue, onAnalyze, isAnalyzing, error, mode }) => {
   return (
     <div className="w-full max-w-lg mx-auto">
       <div className="flex items-center gap-2 bg-black/50 p-2 border border-lime-500/30 focus-within:ring-2 focus-within:ring-lime-500 transition-all duration-300">
         <input
-          type="tel"
-          value={phoneNumber}
-          onChange={(e) => setPhoneNumber(e.target.value)}
-          placeholder="> enter target number..."
+          type="text"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          placeholder={mode === 'PHONE' ? "> enter target number..." : "> enter 15-digit IMEI..."}
           disabled={isAnalyzing}
           className="flex-grow bg-transparent p-2 text-lg text-lime-300 placeholder-lime-900 focus:outline-none"
         />
@@ -34,7 +34,7 @@ const PhoneNumberInput: React.FC<PhoneNumberInputProps> = ({ phoneNumber, setPho
           ) : (
             <>
               <SearchIcon className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              Analyze
+              {mode === 'PHONE' ? 'Analyze' : 'Track'}
             </>
           )}
         </button>
@@ -264,6 +264,74 @@ const CallLogsDisplay: React.FC<{ logs: CallLogItem[] }> = ({ logs }) => {
     );
 };
 
+const NetworkTrafficDisplay: React.FC<{ traffic: NetworkPacket[], onSelectPacket: (packet: NetworkPacket) => void }> = ({ traffic, onSelectPacket }) => {
+    return (
+        <div className="w-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn mt-6">
+            <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-lime-400 flex items-center gap-2">
+                    <ServerIcon className="w-5 h-5" />
+                    Live Network Packet Capture
+                </h2>
+                <div className="flex items-center gap-2">
+                     <span className="text-xs text-lime-600 uppercase">Interface:</span>
+                     <span className="text-xs text-lime-200 bg-lime-900/30 px-2 py-0.5 border border-lime-500/30">wlan0mon (Promiscuous)</span>
+                </div>
+            </div>
+
+            {/* Visualizer Simulation */}
+            <div className="h-24 w-full bg-black/50 border border-lime-900 mb-4 flex items-end gap-[2px] p-1 overflow-hidden">
+                {Array.from({ length: 60 }).map((_, i) => (
+                    <div 
+                        key={i} 
+                        className="bg-lime-500/40 w-full"
+                        style={{ 
+                            height: `${Math.random() * 100}%`,
+                            animation: `pulse-height ${0.5 + Math.random()}s infinite alternate`
+                        }} 
+                    />
+                ))}
+            </div>
+
+            <div className="overflow-x-auto max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-lime-700 scrollbar-track-black border border-lime-500/20">
+                <table className="w-full text-xs text-left font-mono">
+                    <thead className="text-lime-600 uppercase bg-lime-900/20 sticky top-0">
+                        <tr>
+                            <th className="px-2 py-1">Time</th>
+                            <th className="px-2 py-1">Source</th>
+                            <th className="px-2 py-1">Destination</th>
+                            <th className="px-2 py-1">Protocol</th>
+                            <th className="px-2 py-1">Len</th>
+                            <th className="px-2 py-1">Info</th>
+                            <th className="px-2 py-1">Payload Snippet</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-lime-500/10 cursor-pointer">
+                        {traffic.map((packet) => (
+                            <tr key={packet.id} onClick={() => onSelectPacket(packet)} className="hover:bg-lime-900/40 transition-colors border-b border-lime-900/10 group">
+                                <td className="px-2 py-1 text-lime-200/70 group-hover:text-white">{packet.time}</td>
+                                <td className="px-2 py-1 text-lime-400">{packet.source}</td>
+                                <td className="px-2 py-1 text-red-400">{packet.destination}</td>
+                                <td className={`px-2 py-1 font-bold ${packet.protocol === 'RTP' ? 'text-yellow-400' : packet.protocol === 'SS7/MAP' ? 'text-purple-400' : 'text-blue-400'}`}>
+                                    {packet.protocol}
+                                </td>
+                                <td className="px-2 py-1 text-gray-400">{packet.length}</td>
+                                <td className="px-2 py-1 text-lime-100">{packet.info}</td>
+                                <td className="px-2 py-1 text-gray-500 break-all">{packet.payload}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+             <style>{`
+                @keyframes pulse-height {
+                    0% { opacity: 0.3; transform: scaleY(0.5); }
+                    100% { opacity: 0.8; transform: scaleY(1); }
+                }
+            `}</style>
+        </div>
+    );
+};
+
 const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location }> = ({ victimLocation, attackerLocation }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
 
@@ -321,41 +389,81 @@ const ThreatMap: React.FC<{ victimLocation: Location; attackerLocation: Location
       <div className="relative aspect-square bg-black/30 overflow-hidden border border-lime-500/30">
         <div ref={mapContainerRef} className="w-full h-full" id="map" />
       </div>
-      <style>{`
-        .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas, .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer {
-            z-index: 1 !important;
-        }
-        .leaflet-popup-pane, .leaflet-control { z-index: 2 !important; }
-        .leaflet-popup-content-wrapper {
-            background: #050505;
-            color: #39ff14;
-            border: 1px solid #39ff14;
-            border-radius: 0;
-        }
-        .leaflet-popup-content { font-family: 'Share Tech Mono', monospace; }
-        .leaflet-popup-tip { background: #050505; border-top-color: #39ff14; }
-        .leaflet-container a.leaflet-popup-close-button { color: #39ff14; }
-        .custom-pulse-icon { position: relative; }
-        .pulse-dot {
-            width: 12px; height: 12px;
-            position: absolute; top: 6px; left: 6px;
-            border-radius: 50%;
-            border: 2px solid black;
-        }
-        .pulse-ring {
-            width: 24px; height: 24px; border-radius: 50%;
-            position: absolute; top: 0; left: 0;
-            animation: pulse-animation 1.5s infinite;
-        }
-        @keyframes pulse-animation {
-            0% { transform: scale(0.5); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
-      `}</style>
     </div>
   );
 };
 
+const MovementMap: React.FC<{ history: ImeiTrackingResult['locationHistory'] }> = ({ history }) => {
+    const mapContainerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        if (!mapContainerRef.current || typeof L === 'undefined') return;
+
+        const map = L.map(mapContainerRef.current, {
+            zoomControl: true,
+            attributionControl: false,
+        });
+
+        const tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 18,
+        }).addTo(map);
+
+        if (tileLayer.getContainer()) {
+            (tileLayer.getContainer() as HTMLElement).style.filter = 'grayscale(1) brightness(0.6) invert(1)';
+        }
+
+        const latlngs = history.map(h => [h.lat, h.lon]);
+
+        const createNumberedIcon = (num: number, isLast: boolean) => L.divIcon({
+            className: 'custom-numbered-icon',
+            html: `<div class="number-marker ${isLast ? 'last-marker' : ''}">${num}</div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+            popupAnchor: [0, -12]
+        });
+
+        history.forEach((loc, index) => {
+             L.marker([loc.lat, loc.lon], { icon: createNumberedIcon(index + 1, index === history.length - 1) })
+                .addTo(map)
+                .bindPopup(`<b>${loc.locationName}</b><br>${loc.timestamp}<br>Lat: ${loc.lat.toFixed(4)}`);
+        });
+
+        L.polyline(latlngs, { color: '#39ff14', weight: 3, opacity: 0.8 }).addTo(map);
+        
+        if (latlngs.length > 0) {
+             map.fitBounds(L.latLngBounds(latlngs), { padding: [40, 40] });
+        }
+
+        return () => {
+            map.remove();
+        };
+    }, [history]);
+
+    return (
+        <div className="w-full h-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn">
+            <h2 className="text-xl font-bold text-lime-400 mb-4">Geospatial Movement History</h2>
+            <div className="relative aspect-square bg-black/30 overflow-hidden border border-lime-500/30">
+                <div ref={mapContainerRef} className="w-full h-full" id="map-history" />
+            </div>
+             <style>{`
+                .number-marker {
+                    background-color: #000;
+                    color: #39ff14;
+                    border: 1px solid #39ff14;
+                    border-radius: 50%;
+                    width: 24px; height: 24px;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 12px; font-weight: bold;
+                }
+                .last-marker {
+                    background-color: #39ff14;
+                    color: #000;
+                    box-shadow: 0 0 10px #39ff14;
+                }
+            `}</style>
+        </div>
+    );
+};
 
 const DetailedLogsModal: React.FC<{ logs: LogEntry[]; onClose: () => void }> = ({ logs, onClose }) => {
   useEffect(() => {
@@ -392,28 +500,169 @@ const DetailedLogsModal: React.FC<{ logs: LogEntry[]; onClose: () => void }> = (
   );
 }
 
+const PacketInspectorModal: React.FC<{ packet: NetworkPacket; onClose: () => void }> = ({ packet, onClose }) => {
+     useEffect(() => {
+        const handleEsc = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose(); };
+        window.addEventListener('keydown', handleEsc);
+        return () => window.removeEventListener('keydown', handleEsc);
+    }, [onClose]);
+
+    return (
+         <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fadeIn" onClick={onClose}>
+             <div className="w-full max-w-4xl bg-black border border-lime-500 shadow-[0_0_20px_rgba(57,255,20,0.2)] flex flex-col max-h-[90vh]" onClick={e => e.stopPropagation()}>
+                 <div className="p-3 border-b border-lime-500/30 bg-lime-900/10 flex justify-between items-center">
+                    <h2 className="text-lg font-bold text-lime-400 font-mono">Packet Inspector: Frame #{packet.id}</h2>
+                    <button onClick={onClose} className="text-lime-400 hover:text-white text-xl font-mono">[X]</button>
+                 </div>
+                 <div className="flex-grow overflow-y-auto p-4 font-mono text-sm space-y-4">
+                     {/* Packet Summary */}
+                     <div className="grid grid-cols-2 gap-4 border-b border-lime-500/20 pb-4">
+                         <div><span className="text-lime-600">Time:</span> <span className="text-lime-200">{packet.time}</span></div>
+                         <div><span className="text-lime-600">Protocol:</span> <span className="text-lime-200">{packet.protocol}</span></div>
+                         <div><span className="text-lime-600">Source:</span> <span className="text-lime-200">{packet.source}</span></div>
+                         <div><span className="text-lime-600">Destination:</span> <span className="text-lime-200">{packet.destination}</span></div>
+                         <div className="col-span-2"><span className="text-lime-600">Info:</span> <span className="text-lime-200">{packet.info}</span></div>
+                     </div>
+
+                     {/* Headers */}
+                     <div>
+                         <h3 className="text-lime-500 mb-2 border-l-4 border-lime-500 pl-2">Protocol Headers</h3>
+                         <div className="bg-gray-900/50 p-3 border border-lime-900/50">
+                             {Object.entries(packet.headers).map(([key, value]) => (
+                                 <div key={key} className="grid grid-cols-3 gap-2">
+                                     <span className="text-lime-700 font-bold">{key}:</span>
+                                     <span className="col-span-2 text-lime-200">{value}</span>
+                                 </div>
+                             ))}
+                         </div>
+                     </div>
+
+                     {/* Hex Dump */}
+                     <div>
+                         <h3 className="text-lime-500 mb-2 border-l-4 border-lime-500 pl-2">Payload (Hex/ASCII)</h3>
+                         <div className="bg-black p-4 border border-lime-900/50 font-mono text-xs overflow-x-auto whitespace-pre text-gray-400">
+                             {packet.hexDump}
+                         </div>
+                     </div>
+                 </div>
+             </div>
+         </div>
+    );
+};
+
+const ImeiResultsDisplay: React.FC<{ result: ImeiTrackingResult }> = ({ result }) => {
+    return (
+        <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
+            <div className="flex flex-col gap-6">
+                <div className="w-full p-6 border border-lime-500/30 bg-black/30">
+                    <h2 className="text-xl font-bold text-lime-400 mb-4">Device Fingerprint</h2>
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">Model</span>
+                            <span className="text-lime-200">{result.deviceModel}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">IMEI</span>
+                            <span className="text-lime-200">{result.imei}</span>
+                        </div>
+                        <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">Status</span>
+                            <span className="text-lime-400 font-bold bg-lime-900/20 px-2 border border-lime-500/30">{result.status}</span>
+                        </div>
+                         <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">Battery</span>
+                            <span className="text-lime-200">{result.batteryLevel}</span>
+                        </div>
+                         <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">Last Active</span>
+                            <span className="text-lime-200">{result.lastActive}</span>
+                        </div>
+                         <div className="mt-4 pt-4">
+                             <h3 className="text-lime-500 font-bold mb-2">Hardware Info</h3>
+                             <p><span className="text-lime-700">Manufacturer:</span> {result.hardwareInfo.manufacturer}</p>
+                             <p><span className="text-lime-700">S/N:</span> {result.hardwareInfo.serialNumber}</p>
+                             <p><span className="text-lime-700">Production:</span> {result.hardwareInfo.productionDate}</p>
+                             <p><span className="text-lime-700">Bootloader:</span> {result.hardwareInfo.bootloaderStatus}</p>
+                         </div>
+                    </div>
+                </div>
+
+                <div className="w-full p-6 border border-lime-500/30 bg-black/30 flex-grow">
+                     <h2 className="text-xl font-bold text-lime-400 mb-4 flex items-center gap-2">
+                         <ActivityIcon className="w-5 h-5" />
+                         Ping History
+                     </h2>
+                     <div className="overflow-x-auto">
+                        <table className="w-full text-xs text-left">
+                            <thead className="text-lime-600 uppercase bg-lime-900/20">
+                                <tr>
+                                    <th className="px-2 py-2">Time</th>
+                                    <th className="px-2 py-2">Location</th>
+                                    <th className="px-2 py-2">Method</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-lime-500/10">
+                                {result.locationHistory.map((item) => (
+                                    <tr key={item.id} className="hover:bg-lime-900/10">
+                                        <td className="px-2 py-2 text-lime-200">{item.timestamp}</td>
+                                        <td className="px-2 py-2 text-lime-200">{item.locationName}</td>
+                                        <td className="px-2 py-2 text-gray-500">{item.trigger}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                     </div>
+                </div>
+            </div>
+            
+            <div className="flex flex-col gap-6">
+                <MovementMap history={result.locationHistory} />
+            </div>
+        </div>
+    );
+};
 
 function App() {
-  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [inputValue, setInputValue] = useState<string>('');
+  const [searchMode, setSearchMode] = useState<'PHONE' | 'IMEI'>('PHONE');
   const [analysisLogs, setAnalysisLogs] = useState<LogEntry[]>([]);
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisComplete, setAnalysisComplete] = useState<boolean>(false);
   const [results, setResults] = useState<AnalysisResult | null>(null);
+  const [imeiResults, setImeiResults] = useState<ImeiTrackingResult | null>(null);
   const [error, setError] = useState<string>('');
   const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
+  const [selectedPacket, setSelectedPacket] = useState<NetworkPacket | null>(null);
 
   const handleStartAnalysis = async () => {
-    if (!phoneNumber.trim() || !/^\+?[0-9\s-()]{7,20}$/.test(phoneNumber)) {
-      setError('Please enter a valid phone number.');
+    if (!inputValue.trim()) {
+      setError('Input cannot be empty.');
       return;
     }
+    
+    if (searchMode === 'PHONE' && !/^\+?[0-9\s-()]{7,20}$/.test(inputValue)) {
+         setError('Please enter a valid phone number.');
+         return;
+    }
+
+     if (searchMode === 'IMEI' && !/^[0-9\s]{14,20}$/.test(inputValue)) {
+         setError('Please enter a valid 15-digit IMEI.');
+         return;
+    }
+
     setError('');
     setIsAnalyzing(true);
     setAnalysisComplete(false);
     setAnalysisLogs([]);
     setResults(null);
+    setImeiResults(null);
     
-    const initialLog: LogEntry = { id: -1, message: `Starting analysis for ${phoneNumber}...`, status: 'running', icon: <SearchIcon className="w-5 h-5"/> };
+    const initialLog: LogEntry = { 
+        id: -1, 
+        message: searchMode === 'PHONE' ? `Starting interception analysis for ${inputValue}...` : `Initiating global tracking for IMEI ${inputValue}...`, 
+        status: 'running', 
+        icon: <SearchIcon className="w-5 h-5"/> 
+    };
     const allLogs = [initialLog];
 
     let cumulativeDelay = 1500;
@@ -429,8 +678,12 @@ function App() {
     setTimeout(() => {
       setIsAnalyzing(false);
       setAnalysisComplete(true);
-      setResults(FAKE_RESULT);
-      setAnalysisLogs(allLogs); // Set the full log history for the modal
+      if (searchMode === 'PHONE') {
+          setResults(FAKE_RESULT);
+      } else {
+          setImeiResults(FAKE_IMEI_RESULT);
+      }
+      setAnalysisLogs(allLogs); 
     }, cumulativeDelay + 1000);
   };
 
@@ -444,23 +697,40 @@ function App() {
       </div>
 
       <div className="w-full space-y-6">
+        {/* Search Mode Toggle */}
+        <div className="flex justify-center gap-4 mb-4">
+            <button 
+                onClick={() => { setSearchMode('PHONE'); setInputValue(''); setAnalysisComplete(false); }}
+                className={`px-4 py-2 border ${searchMode === 'PHONE' ? 'bg-lime-900/50 border-lime-500 text-lime-200' : 'border-lime-900/30 text-lime-800'}`}
+            >
+                Phone Intercept
+            </button>
+            <button 
+                onClick={() => { setSearchMode('IMEI'); setInputValue(''); setAnalysisComplete(false); }}
+                className={`px-4 py-2 border ${searchMode === 'IMEI' ? 'bg-lime-900/50 border-lime-500 text-lime-200' : 'border-lime-900/30 text-lime-800'}`}
+            >
+                IMEI Geo-Tracking
+            </button>
+        </div>
+
         <PhoneNumberInput
-          phoneNumber={phoneNumber}
-          setPhoneNumber={setPhoneNumber}
+          inputValue={inputValue}
+          setInputValue={setInputValue}
           onAnalyze={handleStartAnalysis}
           isAnalyzing={isAnalyzing}
           error={error}
+          mode={searchMode}
         />
 
         {(isAnalyzing || analysisLogs.length > 0 && !analysisComplete) && (
           <AnalysisLog logs={analysisLogs} />
         )}
         
-        {analysisComplete && results && (
+        {analysisComplete && searchMode === 'PHONE' && results && (
            <>
             <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="flex flex-col gap-6">
-                <VictimInfoDisplay victimInfo={results.victimInfo} phoneNumber={phoneNumber} />
+                <VictimInfoDisplay victimInfo={results.victimInfo} phoneNumber={inputValue} />
                 <DeviceInfoDisplay victimInfo={results.victimInfo} />
               </div>
               <div className="flex flex-col gap-6">
@@ -468,20 +738,58 @@ function App() {
                 <ThreatMap victimLocation={results.victimInfo.location} attackerLocation={results.attackerLocation} />
               </div>
             </div>
-            {/* New Row for Logs */}
+            
             <div className="w-full max-w-6xl mx-auto grid grid-cols-1 gap-6">
                <CloningHistoryDisplay history={results.cloningHistory} />
+               <NetworkTrafficDisplay traffic={results.networkTraffic} onSelectPacket={setSelectedPacket} />
                <CallLogsDisplay logs={results.callLogs} />
             </div>
-
-            {showLogsModal && <DetailedLogsModal logs={analysisLogs} onClose={() => setShowLogsModal(false)} />}
           </>
         )}
+
+        {analysisComplete && searchMode === 'IMEI' && imeiResults && (
+            <ImeiResultsDisplay result={imeiResults} />
+        )}
+
+        {showLogsModal && <DetailedLogsModal logs={analysisLogs} onClose={() => setShowLogsModal(false)} />}
+        {selectedPacket && <PacketInspectorModal packet={selectedPacket} onClose={() => setSelectedPacket(null)} />}
+
       </div>
 
       <footer className="mt-12 text-center text-xs text-lime-800/70">
           <p>&copy; 2024 Corporate Security Division</p>
       </footer>
+       <style>{`
+        .leaflet-pane, .leaflet-tile, .leaflet-marker-icon, .leaflet-marker-shadow, .leaflet-tile-container, .leaflet-pane > svg, .leaflet-pane > canvas, .leaflet-zoom-box, .leaflet-image-layer, .leaflet-layer {
+            z-index: 1 !important;
+        }
+        .leaflet-popup-pane, .leaflet-control { z-index: 2 !important; }
+        .leaflet-popup-content-wrapper {
+            background: #050505;
+            color: #39ff14;
+            border: 1px solid #39ff14;
+            border-radius: 0;
+        }
+        .leaflet-popup-content { font-family: 'Share Tech Mono', monospace; }
+        .leaflet-popup-tip { background: #050505; border-top-color: #39ff14; }
+        .leaflet-container a.leaflet-popup-close-button { color: #39ff14; }
+        .custom-pulse-icon { position: relative; }
+        .pulse-dot {
+            width: 12px; height: 12px;
+            position: absolute; top: 6px; left: 6px;
+            border-radius: 50%;
+            border: 2px solid black;
+        }
+        .pulse-ring {
+            width: 24px; height: 24px; border-radius: 50%;
+            position: absolute; top: 0; left: 0;
+            animation: pulse-animation 1.5s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+      `}</style>
     </div>
   );
 }

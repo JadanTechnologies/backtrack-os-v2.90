@@ -49,6 +49,44 @@ export interface CallLogItem {
   maskedNumber: string;
 }
 
+export interface NetworkPacket {
+  id: number;
+  time: string;
+  source: string;
+  destination: string;
+  protocol: string;
+  length: number;
+  info: string;
+  payload: string; // Hex snippet
+  headers: Record<string, string>; // Detailed headers
+  hexDump: string; // Full hex view
+}
+
+export interface LocationHistoryItem {
+  id: number;
+  timestamp: string;
+  lat: number;
+  lon: number;
+  locationName: string;
+  accuracy: string;
+  trigger: 'Tower Triangulation' | 'GPS Pinging' | 'WiFi Handshake';
+}
+
+export interface ImeiTrackingResult {
+  deviceModel: string;
+  imei: string;
+  status: 'Active' | 'Inactive' | 'Blacklisted';
+  batteryLevel: string;
+  lastActive: string;
+  locationHistory: LocationHistoryItem[];
+  hardwareInfo: {
+    manufacturer: string;
+    serialNumber: string;
+    productionDate: string;
+    bootloaderStatus: string;
+  };
+}
+
 export interface AnalysisResult {
   threatLevel: 'High' | 'Medium' | 'Low' | 'None';
   summary: string;
@@ -57,14 +95,16 @@ export interface AnalysisResult {
   attackerLocation: Location;
   cloningHistory: CloningHistoryItem[];
   callLogs: CallLogItem[];
+  networkTraffic: NetworkPacket[];
 }
 
 export interface PhoneNumberInputProps {
-  phoneNumber: string;
-  setPhoneNumber: (value: string) => void;
+  inputValue: string;
+  setInputValue: (value: string) => void;
   onAnalyze: () => void;
   isAnalyzing: boolean;
   error: string;
+  mode: 'PHONE' | 'IMEI';
 }
 
 export interface AnalysisLogProps {
