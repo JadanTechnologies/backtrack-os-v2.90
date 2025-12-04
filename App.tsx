@@ -216,6 +216,14 @@ const CloningHistoryDisplay: React.FC<{ history: CloningHistoryItem[] }> = ({ hi
 };
 
 const CallLogsDisplay: React.FC<{ logs: CallLogItem[] }> = ({ logs }) => {
+    const [copiedInfo, setCopiedInfo] = useState<{id: number, field: 'hash' | 'number'} | null>(null);
+
+    const handleCopy = (text: string, id: number, field: 'hash' | 'number') => {
+        navigator.clipboard.writeText(text);
+        setCopiedInfo({ id, field });
+        setTimeout(() => setCopiedInfo(null), 1500);
+    };
+
     return (
         <div className="w-full p-6 border border-lime-500/30 bg-black/30 animate-fadeIn mt-6">
              <div className="flex items-center justify-between mb-4">
@@ -253,8 +261,36 @@ const CallLogsDisplay: React.FC<{ logs: CallLogItem[] }> = ({ logs }) => {
                                 </td>
                                 <td className="px-4 py-2 text-lime-200">{log.timestamp}</td>
                                 <td className="px-4 py-2 text-lime-200">{log.duration}</td>
-                                <td className="px-4 py-2 text-gray-500">{log.hash}</td>
-                                <td className="px-4 py-2 text-lime-200">{log.maskedNumber}</td>
+                                <td 
+                                    className="px-4 py-2 text-gray-500 cursor-pointer hover:text-lime-400 hover:bg-lime-900/20 transition-all relative group"
+                                    onClick={() => handleCopy(log.hash, log.id, 'hash')}
+                                    title="Click to copy hash"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span>{log.hash}</span>
+                                        <span className="opacity-0 group-hover:opacity-100 text-[10px] text-lime-600 border border-lime-600 px-1 rounded">CPY</span>
+                                    </div>
+                                    {copiedInfo?.id === log.id && copiedInfo?.field === 'hash' && (
+                                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-lime-900 text-lime-400 text-xs px-2 py-1 border border-lime-500 z-10 shadow-lg whitespace-nowrap">
+                                            COPIED
+                                        </div>
+                                    )}
+                                </td>
+                                <td 
+                                    className="px-4 py-2 text-lime-200 cursor-pointer hover:text-lime-400 hover:bg-lime-900/20 transition-all relative group"
+                                    onClick={() => handleCopy(log.maskedNumber, log.id, 'number')}
+                                    title="Click to copy number"
+                                >
+                                    <div className="flex items-center gap-2">
+                                        <span>{log.maskedNumber}</span>
+                                        <span className="opacity-0 group-hover:opacity-100 text-[10px] text-lime-600 border border-lime-600 px-1 rounded">CPY</span>
+                                    </div>
+                                     {copiedInfo?.id === log.id && copiedInfo?.field === 'number' && (
+                                        <div className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-lime-900 text-lime-400 text-xs px-2 py-1 border border-lime-500 z-10 shadow-lg whitespace-nowrap">
+                                            COPIED
+                                        </div>
+                                    )}
+                                </td>
                             </tr>
                         ))}
                     </tbody>
