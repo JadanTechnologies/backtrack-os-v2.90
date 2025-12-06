@@ -75,9 +75,10 @@ export interface LocationHistoryItem {
 export interface ImeiTrackingResult {
   deviceModel: string;
   imei: string;
-  status: 'Active' | 'Inactive' | 'Blacklisted';
+  status: 'Active' | 'Inactive' | 'Blacklisted' | 'Powered Off';
   batteryLevel: string;
   lastActive: string;
+  activeSims: string[];
   locationHistory: LocationHistoryItem[];
   hardwareInfo: {
     manufacturer: string;

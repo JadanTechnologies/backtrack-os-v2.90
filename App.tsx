@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { LogEntry, AnalysisResult, PhoneNumberInputProps, AnalysisLogProps, ResultsDisplayProps, VictimInfoDisplayProps, VictimInfo, Location, CloningHistoryItem, CallLogItem, NetworkPacket, ImeiTrackingResult } from './types';
 import { ANALYSIS_STEPS, FAKE_RESULT, FAKE_IMEI_RESULT } from './constants';
-import { SearchIcon, AlertTriangleIcon, FileTextIcon, ActivityIcon, ServerIcon, MapPinIcon } from './constants';
+import { SearchIcon, AlertTriangleIcon, FileTextIcon, ActivityIcon, ServerIcon, MapPinIcon, PowerIcon } from './constants';
 
 declare const L: any;
 
@@ -587,6 +587,17 @@ const PacketInspectorModal: React.FC<{ packet: NetworkPacket; onClose: () => voi
 };
 
 const ImeiResultsDisplay: React.FC<{ result: ImeiTrackingResult }> = ({ result }) => {
+    const [deviceStatus, setDeviceStatus] = useState(result.status);
+    const [isBooting, setIsBooting] = useState(false);
+
+    const handleForceBoot = () => {
+        setIsBooting(true);
+        setTimeout(() => {
+            setDeviceStatus('Active');
+            setIsBooting(false);
+        }, 3000); // Simulate boot delay
+    };
+
     return (
         <div className="w-full max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-6 animate-fadeIn">
             <div className="flex flex-col gap-6">
@@ -601,9 +612,35 @@ const ImeiResultsDisplay: React.FC<{ result: ImeiTrackingResult }> = ({ result }
                             <span className="text-lime-600 font-bold">IMEI</span>
                             <span className="text-lime-200">{result.imei}</span>
                         </div>
-                        <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                        <div className="flex justify-between border-b border-lime-500/10 pb-1 items-center">
                             <span className="text-lime-600 font-bold">Status</span>
-                            <span className="text-lime-400 font-bold bg-lime-900/20 px-2 border border-lime-500/30">{result.status}</span>
+                            <div className="flex items-center gap-2">
+                                <span className={`font-bold px-2 border ${deviceStatus === 'Active' ? 'text-lime-400 border-lime-500/30 bg-lime-900/20' : 'text-red-400 border-red-500/30 bg-red-900/20'}`}>
+                                    {deviceStatus}
+                                </span>
+                                {deviceStatus !== 'Active' && (
+                                    <button 
+                                        onClick={handleForceBoot}
+                                        disabled={isBooting}
+                                        className="text-xs bg-red-900/50 hover:bg-red-800 border border-red-500 text-red-300 px-2 py-1 flex items-center gap-1 transition-all"
+                                    >
+                                        {isBooting ? (
+                                            <>
+                                                <svg className="animate-spin h-3 w-3 text-red-300" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                BOOTING...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <PowerIcon className="w-3 h-3" />
+                                                FORCE REMOTE BOOT
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
                          <div className="flex justify-between border-b border-lime-500/10 pb-1">
                             <span className="text-lime-600 font-bold">Battery</span>
@@ -612,6 +649,14 @@ const ImeiResultsDisplay: React.FC<{ result: ImeiTrackingResult }> = ({ result }
                          <div className="flex justify-between border-b border-lime-500/10 pb-1">
                             <span className="text-lime-600 font-bold">Last Active</span>
                             <span className="text-lime-200">{result.lastActive}</span>
+                        </div>
+                         <div className="flex justify-between border-b border-lime-500/10 pb-1">
+                            <span className="text-lime-600 font-bold">Active SIMs</span>
+                            <span className="text-lime-200 text-right">
+                                {result.activeSims.map((sim, i) => (
+                                    <span key={i} className="block">{sim}</span>
+                                ))}
+                            </span>
                         </div>
                          <div className="mt-4 pt-4">
                              <h3 className="text-lime-500 font-bold mb-2">Hardware Info</h3>
